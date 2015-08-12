@@ -2,7 +2,7 @@ from distutils.core import setup
 setup(
     name = "mxp",
     packages = ["mxp"],
-    version = "0.1",
+    version = "0.1.1",
     description = "qPCR fileformat reader",
     author = "Florian FInkernagel",
     author_email = "finkernagel@imt.uni-marburg.de",
@@ -13,7 +13,7 @@ setup(
         #"Programming Language :: Python :: 3",
         "Development Status :: 4 - Beta",
         "Environment :: Other Environment",
-        "Intended Audience :: Scientists",
+        "Intended Audience :: Developers",
         "License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)",
         "Operating System :: OS Independent",
         "Topic :: Software Development :: Libraries :: Python Modules",
