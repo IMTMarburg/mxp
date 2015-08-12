@@ -2,12 +2,17 @@ from distutils.core import setup
 setup(
     name = "mxp",
     packages = ["mxp"],
-    version = "0.1.1",
+    version = "0.1.2",
     description = "qPCR fileformat reader",
     author = "Florian FInkernagel",
     author_email = "finkernagel@imt.uni-marburg.de",
     url = "http://www.imt.uni-marburg.de",
     keywords = ["qPCR", "MXP"],
+    install_requires=[
+                  'olefile',
+                  'pandas',
+                        ],
+
     classifiers = [
         "Programming Language :: Python",
         #"Programming Language :: Python :: 3",
