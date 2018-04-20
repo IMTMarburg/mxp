@@ -39,7 +39,7 @@ def read_mxp(filename, allowed_cycles = (4, 7, 13, 14,25, 28, 30, 34, 35, 36, 40
     fileformat = discover_fileformat(ole)
     #print 'fileformat', fileformat
     well_names, assay_names, well_types = np.array(extract_well_names_and_assay_names(ole, fileformat, empty_assays_ok))
-    well_numbers = np.array(xrange(0, 97))
+    well_numbers = np.array(xrange(0, 96))
     #empty wells that were not read, and are not in the amplification curve file...
     ok_wells_by_name = (well_names != '') | (assay_names != '')
     ok_wells_by_type = (well_types != '')
@@ -114,7 +114,7 @@ def discover_fileformat(ole):
     else:
         return 1
  
-def extract_well_names_and_assay_names(ole, fileformat, empty_assays_ok = False):
+def extract_well_names_and_assay_names(ole, fileformat, empty_assays_ok = False, assay_name_fix=False):
     """Read well and assay names from an MXP file"""
     #print 'using fileformat', fileformat
     if isinstance(ole, olefile.OleFileIO):
@@ -133,7 +133,11 @@ def extract_well_names_and_assay_names(ole, fileformat, empty_assays_ok = False)
         #4 is 1 0 0 0's again...
         #so is 5
         #so is 6, 7, 8
-        assay_parts = [parts[x] for x in xrange(9, len(parts), 12)]
+        if assay_name_fix:
+            start = 7
+        else:
+            start = 9
+        assay_parts = [parts[x] for x in xrange(start, len(parts), 12)]
         fileformat = 1
     elif fileformat == 0:
         if len(parts) == 866: #must be an older file format...
@@ -175,7 +179,10 @@ def extract_well_names_and_assay_names(ole, fileformat, empty_assays_ok = False)
     #if (well_names == '').all(): # I have seen files without well names asigned...
         #raise ValueError("Could not find a single well name in that file!")
     if (assay_names == '').all() and not empty_assays_ok:
-        raise ValueError("Could not find a single assay name in that file!")
+        if not assay_name_fix:
+            return extract_well_names_and_assay_names(ole, fileformat, empty_assays_ok, True)
+        else:
+            raise ValueError("Could not find a single assay name in that file!")
     return well_names, assay_names, well_types
 
 def to_16_bit(letters):
@@ -263,8 +270,8 @@ def extract_amplification_curves(ole, fileformat, allowed_cycles, supposed_wells
     y[-1] = y[-1][:block_len] # there is a different seperator after the last one, so we set it to the first length
         
     if max(set([len(a) for a in y])) > 966: #816: #572: #476: #466: #428:
-        for ii, a in enumerate(y):
-            print ii, len(a)
+        #for ii, a in enumerate(y):
+            #print ii, len(a)
         raise ValueError("Seen a very large chunk: %i " %max(set([len(a) for a in y])))
     result_fluorescence = []
     result_temperatures = []
