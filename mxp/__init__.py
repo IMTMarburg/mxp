@@ -87,10 +87,10 @@ def code_to_well_no(code):
     if len(code) not in (2, 3):
         raise ValueError("Invalid code - wrong length")
     first = ord(code[0]) - ord('A')
-    if not (0 < first <= 8):
-        raise ValueError("Invalid code: wrong first letter")
+    if not (0 <= first <= 8):
+        raise ValueError("Invalid code: wrong first letter: %s, code:%s" % (first, code))
     second = int(code[1:])
-    if not (0 < second <= 12):
+    if not (0 <= second <= 12):
         raise ValueError("Invalid code: wrong number")
 
     return 12 * first + second
@@ -114,7 +114,7 @@ def discover_fileformat(ole):
     else:
         return 1
  
-def extract_well_names_and_assay_names(ole, fileformat, empty_assays_ok = False, assay_name_fix=False):
+def extract_well_names_and_assay_names(ole, fileformat, empty_assays_ok = False):
     """Read well and assay names from an MXP file"""
     #print 'using fileformat', fileformat
     if isinstance(ole, olefile.OleFileIO):
@@ -133,11 +133,21 @@ def extract_well_names_and_assay_names(ole, fileformat, empty_assays_ok = False,
         #4 is 1 0 0 0's again...
         #so is 5
         #so is 6, 7, 8
-        if assay_name_fix:
-            start = 7
-        else:
-            start = 9
+        start = 9
         assay_parts = [parts[x] for x in xrange(start, len(parts), 12)]
+        lengths = np.array([ord(part[8]) for part in assay_parts])
+        if (lengths == 0).all():
+            start = 7
+            assay_parts = [parts[x] for x in xrange(start, len(parts), 12)]
+            lengths = np.array([ord(part[8]) for part in assay_parts])
+            if (lengths == 0).all():
+                start = 8
+                assay_parts = [parts[x] for x in xrange(start, len(parts), 12)]
+                lengths = np.array([ord(part[8]) for part in assay_parts])
+                if (lengths == 0).all() and not empty_assays_ok:
+                    import pprint
+                    pprint.pprint(list(enumerate(parts[:20])))
+                    raise ValueError("Could not read assay names in this file")
         fileformat = 1
     elif fileformat == 0:
         if len(parts) == 866: #must be an older file format...
@@ -179,10 +189,7 @@ def extract_well_names_and_assay_names(ole, fileformat, empty_assays_ok = False,
     #if (well_names == '').all(): # I have seen files without well names asigned...
         #raise ValueError("Could not find a single well name in that file!")
     if (assay_names == '').all() and not empty_assays_ok:
-        if not assay_name_fix:
-            return extract_well_names_and_assay_names(ole, fileformat, empty_assays_ok, True)
-        else:
-            raise ValueError("Could not find a single assay name in that file!")
+        raise ValueError("Could not find a single assay name in that file!")
     return well_names, assay_names, well_types
 
 def to_16_bit(letters):
