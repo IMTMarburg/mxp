@@ -2,7 +2,7 @@ from distutils.core import setup
 setup(
     name = "mxp",
     packages = ["mxp"],
-    version = "0.1.2",
+    version = "0.1.3",
     description = "qPCR fileformat reader",
     author = "Florian FInkernagel",
     author_email = "finkernagel@imt.uni-marburg.de",
@@ -24,6 +24,9 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
         ],
     long_description = """\
-            Reads raw qPCR data from .mxp files and turns it into pandas dataframes.
+Support code to read qPCR machine file formats,
+such as the .mxp file format created by MxPro.
+
+Currently reads files from 300 and 305er machines.
 """
 )

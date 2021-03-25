@@ -20,6 +20,8 @@ import pandas as pd
 import olefile
 import numpy as np
 
+__version__ = "0.1.3"
+
 def read_mxp(filename):
     """Read an MXP file and return a dataframe with the annotated amplification curves"""
     ole = olefile.OleFileIO(filename)
