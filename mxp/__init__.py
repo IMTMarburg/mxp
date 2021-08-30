@@ -51,7 +51,7 @@ class EmptyFile(ValueError):
 
 
 def read_mxp(filename,
-             allowed_cycles=(4, 7, 13, 14, 25, 28, 30, 34, 35, 36, 40, 41, 43,
+             allowed_cycles=(2, 4, 7, 13, 14, 25, 28, 30, 34, 35, 36, 40, 41, 43,
                              44, 45, 49, 50, 55, 60, 65, 120),
              empty_assays_ok=False):
     """Read an MXP file and return a dataframe with the annotated amplification curves"""
@@ -210,11 +210,15 @@ def extract_well_names_and_assay_names(ole, fileformat, empty_assays_ok=False):
                 start = 8
                 assay_parts = [parts[x] for x in xrange(start, len(parts), 12)]
                 lengths = np.array([ord3(part[8]) for part in assay_parts])
-                if (lengths == 0).all() and not empty_assays_ok:
-                    import pprint
-                    pprint.pprint(list(enumerate(parts[:20])))
-                    raise ValueError("Could not read assay names in this file")
-        fileformat = 1
+                if (lengths == 0).all():
+                    start = 6
+                    assay_parts = [parts[x] for x in xrange(start, len(parts), 12)]
+                    lengths = np.array([ord3(part[8]) for part in assay_parts])
+                    if (lengths == 0).all() and not empty_assays_ok:
+                        import pprint
+                        pprint.pprint(list(enumerate(parts[:20])))
+                        raise ValueError("Could not read assay names in this file")
+            fileformat = 1
     elif fileformat == 0:
         if len(parts) == 866:  #must be an older file format...
             well_parts = [parts[x] for x in xrange(2, len(parts), 9)]
@@ -333,9 +337,9 @@ def extract_amplification_curves(ole,
         raise ValueError("Unknown fileformat")
     if no_of_cycles not in allowed_cycles:
         print(b"%x" % x[4].find(b"("), fileformat)
-        raise ValueError(
-            "File contained an unexpected number of cycles: %i. Allowed: %s" %
-            (no_of_cycles, allowed_cycles))
+        #raise ValueError(
+            #"File contained an unexpected number of cycles: %i. Allowed: %s" %
+            #(no_of_cycles, allowed_cycles))
     seperator = b"\x00\x00\x00" + chr(no_of_cycles).encode('latin1')
     y = x[offset]
     while (y.count(seperator) < supposed_wells):
