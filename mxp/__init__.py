@@ -30,6 +30,8 @@ import natsort
 import sys
 import collections
 
+__version__ = "0.2"
+
 try:
     xrange
 except NameError:
