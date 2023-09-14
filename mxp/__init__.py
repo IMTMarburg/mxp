@@ -96,9 +96,9 @@ def read_mxp(
             ok_wells = ok_wells_by_type
         else:
             ok_wells = ok_wells_by_name
-        well_names = [x.decode("latin1") for x in well_names[ok_wells]]
-        assay_names = [x.decode("latin1") for x in assay_names[ok_wells]]
-        set_ids = [x.decode("latin1") for x in set_ids[ok_wells]]
+        well_names = [x for x in well_names[ok_wells]]
+        assay_names = [x for x in assay_names[ok_wells]]
+        set_ids = [x for x in set_ids[ok_wells]]
         well_numbers = well_numbers[ok_wells]
 
         amplification_data = extract_amplification_curves(

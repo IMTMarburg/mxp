@@ -43,8 +43,8 @@ def compare_mxp_and_exported(mxp_df, exported_df):
     # print('assay', (exported_df['Dye'] == mxp_df['Assay']) .all())
     return (
             (exported_df.Fluorescence == mxp_df.Fluorescence) & 
-            (exported_df['Well Name'] == mxp_df['Well Name']) &
-        (exported_df['Dye'] == mxp_df['Assay']) 
+            (exported_df['Well Name'] == mxp_df['Well Name'].str.decode('utf-8', errors='replace')) &
+        (exported_df['Dye'] == mxp_df['Assay'].str.decode('utf-8', errors='replace')) 
         ).all()
     
 class MXPTests(unittest.TestCase):
@@ -80,9 +80,9 @@ class MXPTests(unittest.TestCase):
         data = read_mxp(fn)
         with open('testfiles/set_number_test.should.json') as of:
             should = json.loads(of.read())
-        assert (data['Assay'] == should['Assay']).all()
-        assert (data['Well Name'] == should['Well Name']).all()
-        assert (data['Set id'] == should['Set id']).all()
+        assert (data['Assay'].str.decode('utf-8', errors='replace') == should['Assay']).all()
+        assert (data['Well Name'].str.decode('utf-8', errors='replace') == should['Well Name']).all()
+        assert (data['Set id'].str.decode('utf-8', errors='replace') == should['Set id']).all()
 
 
 if __name__ == '__main__': 
