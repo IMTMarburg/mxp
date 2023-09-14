@@ -61,11 +61,11 @@ class MXPTests(unittest.TestCase):
             "testfiles/3005 - Text Report Data.txt")
         self.assertTrue(compare_mxp_and_exported(data, exported_data))
 
-    def test_reem_1(self):
+    def test_rm_1(self):
         fn = 'testfiles/U937 cells ski and vector 7.05.2018.mxp'
         data = read_mxp(fn)
 
-    def test_reem_2(self):
+    def test_rm_2(self):
         fn = 'testfiles/HL60 SKI GFP 19.04.2018.mxp'
         data = read_mxp(fn)
 
