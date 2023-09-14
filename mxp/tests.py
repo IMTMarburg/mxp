@@ -1,4 +1,5 @@
 import unittest
+import json
 from __init__ import *
 
 
@@ -73,6 +74,15 @@ class MXPTests(unittest.TestCase):
     def test_rm_2(self):
         fn = 'testfiles/HL60 SKI GFP 19.04.2018.mxp'
         data = read_mxp(fn)
+
+    def test_set_numbers(self):
+        fn = "testfiles/set_number_test.mxp"
+        data = read_mxp(fn)
+        with open('testfiles/set_number_test.should.json') as of:
+            should = json.loads(of.read())
+        assert (data['Assay'] == should['Assay']).all()
+        assert (data['Well Name'] == should['Well Name']).all()
+        assert (data['Set id'] == should['Set id']).all()
 
 
 if __name__ == '__main__': 

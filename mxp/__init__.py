@@ -84,7 +84,7 @@ def read_mxp(
         ole = olefile.OleFileIO(filename)
         fileformat = discover_fileformat(ole)
         # print 'fileformat', fileformat
-        well_names, assay_names, well_types = np.array(
+        well_names, assay_names, well_types, set_ids = np.array(
             extract_well_names_and_assay_names(ole, fileformat, empty_assays_ok)
         )
         well_numbers = np.array(xrange(0, 96))
@@ -96,8 +96,9 @@ def read_mxp(
             ok_wells = ok_wells_by_type
         else:
             ok_wells = ok_wells_by_name
-        well_names = [x.decode('latin1') for x in well_names[ok_wells]]
-        assay_names = [x.decode('latin1') for x in assay_names[ok_wells]]
+        well_names = [x.decode("latin1") for x in well_names[ok_wells]]
+        assay_names = [x.decode("latin1") for x in assay_names[ok_wells]]
+        set_ids = [x.decode("latin1") for x in set_ids[ok_wells]]
         well_numbers = well_numbers[ok_wells]
 
         amplification_data = extract_amplification_curves(
@@ -113,6 +114,7 @@ def read_mxp(
             "Well Key": [],
             "Assay": [],
             "Well Name": [],
+            'Set id': [],
             "Fluorescence": [],
             "Temperature": [],
             "Cycle": [],
@@ -125,6 +127,7 @@ def read_mxp(
             )
             amp_data["Assay"].extend([assay_names[ii]] * cycle_count)
             amp_data["Well Name"].extend([well_names[ii]] * cycle_count)
+            amp_data["Set id"].extend([set_ids[ii]] * cycle_count)
             amp_data["Fluorescence"].extend(amplification_data[0][ii])
             amp_data["Temperature"].extend(amplification_data[1][ii])
         res = pd.DataFrame(amp_data)
@@ -138,7 +141,9 @@ def read_mxp(
                 "Temperature above 120 degrees observed. Most likely a parsing error"
             )
     finally:
-        ole.close()
+        # only if ole is defined
+        if 'ole' in locals():
+            ole.close()
     return res
 
 
@@ -251,7 +256,7 @@ def extract_well_names_and_assay_names(ole, fileformat, empty_assays_ok=False):
 
                         pprint.pprint(list(enumerate(parts[:20])))
                         raise ValueError("Could not read assay names in this file")
-            fileformat = 1
+        set_id_parts = [parts[x] for x in xrange(10, len(parts), 12)]
     elif fileformat == 0:
         if len(parts) == 866:  # must be an older file format...
             well_parts = [parts[x] for x in xrange(2, len(parts), 9)]
@@ -288,14 +293,24 @@ def extract_well_names_and_assay_names(ole, fileformat, empty_assays_ok=False):
         length = ord3(part[4])
         name = part[5 : 5 + length]
         well_types.append(name)
-    well_names = np.array(well_names)
-    assay_names = np.array(assay_names)
-    well_types = np.array(well_types)
+    set_ids = []
+    if fileformat == 1:
+        for part in set_id_parts:
+            length = ord3(part[4])
+            name = part[5 : 5 + length]
+            set_ids.append(name)
+    else:
+        set_ids = [b''] * len(assay_names)
+
+    well_names = np.array(well_names, dtype=object)
+    assay_names = np.array(assay_names, dtype=object)
+    well_types = np.array(well_types, dtype=object)
+    set_ids = np.array(set_ids, dtype=object)
     # if (well_names == '').all(): # I have seen files without well names asigned...
     # raise ValueError("Could not find a single well name in that file!")
     if (assay_names == b"").all() and not empty_assays_ok:
         raise ValueError("Could not find a single assay name in that file!")
-    return well_names, assay_names, well_types
+    return well_names, assay_names, well_types, set_ids
 
 
 def to_16_bit(letters):
@@ -496,4 +511,3 @@ def extract_amplification_curves(ole, fileformat, allowed_cycles, supposed_wells
             % (supposed_wells, len(result_fluorescence))
         )
     return result_fluorescence, result_temperatures
-
