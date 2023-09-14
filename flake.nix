@@ -16,6 +16,7 @@
     mypython = pkgs.python39.withPackages (p: [
       p.olefile
       p.pandas
+      p.natsort
     ]);
   in {
     devShell.x86_64-linux = pkgs.mkShell {
