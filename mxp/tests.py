@@ -9,9 +9,9 @@ def read_exported_data(instrument_export_filename, text_export_filename):
     df.columns = [x.strip() for x in df.columns]
     for ii, row in df.iterrows():
         if row['Well'].strip() == '---':
-            print 'Warning: Condensed data (not usable) in %s' % fn
+            print('Warning: Condensed data (not usable) in %s' % fn)
             break
-        well_no = code_to_well_no(row['Well'].strip())
+        well_no = code_to_well_no(row['Well'].strip().encode('utf-8'))
         if well_no < 1 or well_no > 96:
             raise ValueError("invalid Well number")
         well_name_lookup[well_no]  = str(row['Well Name']).strip()
@@ -33,8 +33,13 @@ def compare_mxp_and_exported(mxp_df, exported_df):
     mxp_df.Well = mxp_df.Well + 1
     mxp_df = mxp_df.set_index(['Well','Cycle'])
     exported_df = exported_df.set_index(['Well','Cycle #']).copy()
-    exported_df.ix[exported_df['Well Name'] == '---', 'Well Name'] = ''
-    mxp_df = mxp_df.ix[exported_df.index]
+    exported_df.loc[exported_df['Well Name'] == '---', 'Well Name'] = ''
+    mxp_df = mxp_df.loc[exported_df.index]
+    # print('fluorescence', (exported_df.Fluorescence == mxp_df.Fluorescence).all())
+    # print('well name' ,(exported_df['Well Name'] == mxp_df['Well Name']).all())
+    # print(exported_df['Well Name'])
+    # print(mxp_df['Well Name'])
+    # print('assay', (exported_df['Dye'] == mxp_df['Assay']) .all())
     return (
             (exported_df.Fluorescence == mxp_df.Fluorescence) & 
             (exported_df['Well Name'] == mxp_df['Well Name']) &

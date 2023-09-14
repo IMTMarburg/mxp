@@ -80,62 +80,65 @@ def read_mxp(
     empty_assays_ok=False,
 ):
     """Read an MXP file and return a dataframe with the annotated amplification curves"""
-    ole = olefile.OleFileIO(filename)
-    fileformat = discover_fileformat(ole)
-    # print 'fileformat', fileformat
-    well_names, assay_names, well_types = np.array(
-        extract_well_names_and_assay_names(ole, fileformat, empty_assays_ok)
-    )
-    well_numbers = np.array(xrange(0, 96))
-    # empty wells that were not read, and are not in the amplification curve file...
-    ok_wells_by_name = (well_names != b"") | (assay_names != b"")
-    ok_wells_by_type = well_types != b""
-    # A dirty hack because I can't tell which wells were actually measured
-    if ok_wells_by_type.sum() < ok_wells_by_name.sum():
-        ok_wells = ok_wells_by_type
-    else:
-        ok_wells = ok_wells_by_name
-    well_names = well_names[ok_wells]
-    assay_names = assay_names[ok_wells]
-    well_numbers = well_numbers[ok_wells]
-
-    amplification_data = extract_amplification_curves(
-        ole, fileformat, allowed_cycles, len(assay_names)
-    )
-
-    # melting_data = extract_melting_curves(ole)
-
-    cycle_count = len(amplification_data[0][0])
-    well_count = sum(ok_wells)
-    amp_data = {
-        "Well": [],
-        "Well Key": [],
-        "Assay": [],
-        "Well Name": [],
-        "Fluorescence": [],
-        "Temperature": [],
-        "Cycle": [],
-    }
-    for ii in xrange(0, well_count):
-        amp_data["Cycle"].extend(list(xrange(1, cycle_count + 1)))
-        amp_data["Well"].extend([well_numbers[ii]] * cycle_count)
-        amp_data["Well Key"].extend(
-            [well_no_to_code(well_numbers[ii] + 1)] * cycle_count
+    try:
+        ole = olefile.OleFileIO(filename)
+        fileformat = discover_fileformat(ole)
+        # print 'fileformat', fileformat
+        well_names, assay_names, well_types = np.array(
+            extract_well_names_and_assay_names(ole, fileformat, empty_assays_ok)
         )
-        amp_data["Assay"].extend([assay_names[ii]] * cycle_count)
-        amp_data["Well Name"].extend([well_names[ii]] * cycle_count)
-        amp_data["Fluorescence"].extend(amplification_data[0][ii])
-        amp_data["Temperature"].extend(amplification_data[1][ii])
-    res = pd.DataFrame(amp_data)
-    res.insert(len(res.columns), "Filename", filename)
-    res["Well Key"] = pd.Categorical(
-        res["Well Key"],
-        natsort.humansorted(set([well_no_to_code(x) for x in xrange(1, 97)])),
-    )
-    if (res["Temperature"] > 120).any():
-        raise ValueError(
-            "Temperature above 120 degrees obsereved. Most likely a parsing error"
+        well_numbers = np.array(xrange(0, 96))
+        # empty wells that were not read, and are not in the amplification curve file...
+        ok_wells_by_name = (well_names != b"") | (assay_names != b"")
+        ok_wells_by_type = well_types != b""
+        # A dirty hack because I can't tell which wells were actually measured
+        if ok_wells_by_type.sum() < ok_wells_by_name.sum():
+            ok_wells = ok_wells_by_type
+        else:
+            ok_wells = ok_wells_by_name
+        well_names = [x.decode('latin1') for x in well_names[ok_wells]]
+        assay_names = [x.decode('latin1') for x in assay_names[ok_wells]]
+        well_numbers = well_numbers[ok_wells]
+
+        amplification_data = extract_amplification_curves(
+            ole, fileformat, allowed_cycles, len(assay_names)
         )
+
+        # melting_data = extract_melting_curves(ole)
+
+        cycle_count = len(amplification_data[0][0])
+        well_count = sum(ok_wells)
+        amp_data = {
+            "Well": [],
+            "Well Key": [],
+            "Assay": [],
+            "Well Name": [],
+            "Fluorescence": [],
+            "Temperature": [],
+            "Cycle": [],
+        }
+        for ii in xrange(0, well_count):
+            amp_data["Cycle"].extend(list(xrange(1, cycle_count + 1)))
+            amp_data["Well"].extend([well_numbers[ii]] * cycle_count)
+            amp_data["Well Key"].extend(
+                [well_no_to_code(well_numbers[ii] + 1)] * cycle_count
+            )
+            amp_data["Assay"].extend([assay_names[ii]] * cycle_count)
+            amp_data["Well Name"].extend([well_names[ii]] * cycle_count)
+            amp_data["Fluorescence"].extend(amplification_data[0][ii])
+            amp_data["Temperature"].extend(amplification_data[1][ii])
+        res = pd.DataFrame(amp_data)
+        res.insert(len(res.columns), "Filename", filename)
+        res["Well Key"] = pd.Categorical(
+            res["Well Key"],
+            natsort.humansorted(set([well_no_to_code(x) for x in xrange(1, 97)])),
+        )
+        if (res["Temperature"] > 120).any():
+            raise ValueError(
+                "Temperature above 120 degrees observed. Most likely a parsing error"
+            )
+    finally:
+        ole.close()
     return res
 
 
@@ -492,3 +495,5 @@ def extract_amplification_curves(ole, fileformat, allowed_cycles, supposed_wells
             "Not exactly the supposed %i wells - was %i"
             % (supposed_wells, len(result_fluorescence))
         )
+    return result_fluorescence, result_temperatures
+
